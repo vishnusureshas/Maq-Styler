@@ -75,7 +75,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           timeout: 60s
-          script_timeout: 10m
+          command_timeout: 600
           envs: GITHUB_TOKEN,IMAGE_OWNER,IMAGE_TAG
           script: |
             set -euo pipefail
