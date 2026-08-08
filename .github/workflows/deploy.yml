@@ -85,6 +85,9 @@ jobs:
               exit 1
             fi
             cd "$HOME/ecommerce"
+            echo "==> Syncing repo before deploy script"
+            git reset --ff-only origin/main
+            git pull --ff-only
             bash deploy/ec2-deploy.sh
 
       - name: Post-deploy smoke test (from runner)
