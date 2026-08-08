@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Lock, Mail, ShoppingBag, User } from 'lucide-react';
 import { AuthShell } from '@/components/auth/AuthShell';
+import { LoadingOverlay } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +31,7 @@ export default function Register() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [entering, setEntering] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -46,16 +48,19 @@ export default function Register() {
       await dispatch(
         registerUser({ name: values.name, email: values.email, password: values.password })
       ).unwrap();
-      navigate('/');
+      setEntering(true);
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 800);
     } catch (err) {
       setError((err as { message?: string })?.message || 'Registration failed');
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthShell>
+    <>
+      <AuthShell>
       <div className="mb-8">
         <div className="flex items-center gap-2.5">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
@@ -164,6 +169,8 @@ export default function Register() {
           Sign in
         </Link>
       </p>
-    </AuthShell>
+      </AuthShell>
+      {entering && <LoadingOverlay message="Setting up your account" />}
+    </>
   );
 }

@@ -1,4 +1,5 @@
-import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectUser, logoutUser } from '@/store/slices/authSlice';
+import { LoadingOverlay } from '@/components/ui/loading';
 import { cn } from '@/lib/utils';
 
 const adminLinks = [
@@ -52,11 +54,29 @@ export function AdminLayout() {
   const user = useAppSelector(selectUser);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [transitioning, setTransitioning] = useState(false);
+  const prevPath = useRef(location.pathname);
+
+  useEffect(() => {
+    if (prevPath.current !== location.pathname) {
+      prevPath.current = location.pathname;
+      setTransitioning(true);
+      const timer = setTimeout(() => setTransitioning(false), 550);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [location.pathname]);
 
   const logout = () => {
     dispatch(logoutUser());
     navigate('/login');
   };
+
+  const tabLabel = adminLinks.find((l) =>
+    l.end ? location.pathname === l.to : location.pathname.startsWith(l.to)
+  )?.label;
 
   return (
     <div className="flex min-h-[100dvh] bg-[#F7F9FB] text-foreground">
@@ -125,7 +145,7 @@ export function AdminLayout() {
           </Link>
 
           <div className="hidden items-center gap-2 text-sm text-muted-foreground lg:flex">
-            <span className="font-medium text-foreground">Overview</span>
+            <span className="font-medium text-foreground">{tabLabel ?? 'Overview'}</span>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
@@ -196,6 +216,8 @@ export function AdminLayout() {
           </div>
         </div>
       </nav>
+
+      {transitioning && tabLabel && <LoadingOverlay message={`Loading ${tabLabel}…`} />}
     </div>
   );
 }

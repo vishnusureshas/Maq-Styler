@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Lock, Mail, ShoppingBag } from 'lucide-react';
 import { AuthShell } from '@/components/auth/AuthShell';
+import { LoadingOverlay } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +25,8 @@ export default function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [entering, setEntering] = useState(false);
+  const [enteringRole, setEnteringRole] = useState<'user' | 'admin'>('user');
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -37,28 +40,35 @@ export default function Login() {
     setError(null);
     try {
       const action = await dispatch(login(values)).unwrap();
-      navigate(action.role === 'admin' ? '/admin' : '/');
+      setEnteringRole(action.role);
+      setEntering(true);
+      setTimeout(() => {
+        navigate(action.role === 'admin' ? '/admin' : '/', { replace: true });
+      }, 800);
     } catch (err) {
       setError((err as { message?: string })?.message || 'Login failed');
-    } finally {
       setLoading(false);
     }
   };
 
+  const enteringMessage =
+    enteringRole === 'admin' ? 'Entering admin dashboard' : 'Welcome back';
+
   return (
-    <AuthShell>
-      <div className="mb-8">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
-            <ShoppingBag className="h-5 w-5" />
-          </span>
-          <span className="text-xl font-bold tracking-tight">ShopCart</span>
+    <>
+      <AuthShell>
+        <div className="mb-8">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+              <ShoppingBag className="h-5 w-5" />
+            </span>
+            <span className="text-xl font-bold tracking-tight">ShopCart</span>
+          </div>
+          <h1 className="mt-7 text-2xl font-semibold tracking-tight sm:text-3xl">Welcome back</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enter your details to get back into your account.
+          </p>
         </div>
-        <h1 className="mt-7 text-2xl font-semibold tracking-tight sm:text-3xl">Welcome back</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Enter your details to get back into your account.
-        </p>
-      </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
@@ -172,6 +182,8 @@ export default function Login() {
           Create one
         </Link>
       </p>
-    </AuthShell>
+      </AuthShell>
+      {entering && <LoadingOverlay message={enteringMessage} />}
+    </>
   );
 }
