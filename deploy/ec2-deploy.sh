@@ -34,10 +34,12 @@ fi
 if [ -n "${GITHUB_TOKEN:-}" ]; then
   echo "==> Logging into GHCR as $IMAGE_OWNER"
   echo "$GITHUB_TOKEN" | $DOCKER login ghcr.io -u "$IMAGE_OWNER" --password-stdin
+else
+  echo "==> No GITHUB_TOKEN — relying on public GHCR packages"
 fi
 
 echo "==> [3/4] Pull images + recreate services ($IMAGE_OWNER/$IMAGE_TAG)"
-$DOCKER compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+$DOCKER compose -f docker-compose.prod.yml up -d --remove-orphans
 
 echo "==> [4/4] Cleanup + smoke tests"
 $DOCKER image prune -f >/dev/null 2>&1 || true

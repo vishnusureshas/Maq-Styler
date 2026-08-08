@@ -1,16 +1,81 @@
-# Production override — deploys prebuilt GHCR images instead of building on the server.
-# Apply together with the base compose file:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-#
-# Requires env vars (set by deploy/ec2-deploy.sh / the GitHub Actions deploy job):
-#   IMAGE_OWNER  ghcr.io namespace, e.g. vishnureshas  (defaults below)
-#   IMAGE_TAG    image tag to run, default "latest"
+# Production stack — starts ONLY from prebuilt GHCR images.
+# No `build:` keys here, so compose never compiles on the server (t2.micro).
+# Requires env: IMAGE_OWNER (defaults below) and IMAGE_TAG (default latest).
+# Run as:  docker compose -f docker-compose.prod.yml up -d
+
+name: ecommerce-prod
 
 services:
   backend:
     image: ghcr.io/${IMAGE_OWNER:-vishnureshas}/maq-styler-backend:${IMAGE_TAG:-latest}
     pull_policy: always
+    container_name: ecommerce-backend
+    ports:
+      - "5001:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - REDIS_ENABLED=true
+      - MONGO_URI=mongodb://mongo:27017/ecommerce
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
 
   frontend:
     image: ghcr.io/${IMAGE_OWNER:-vishnureshas}/maq-styler-frontend:${IMAGE_TAG:-latest}
     pull_policy: always
+    container_name: ecommerce-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: ecommerce-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+networks:
+  ecommerce-net:
+    name: ecommerce-net
+    driver: bridge
+
+volumes:
+  redis-data:
+  mongo-data:
