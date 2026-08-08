@@ -44,6 +44,15 @@ $DOCKER compose -f docker-compose.prod.yml up -d --remove-orphans
 echo "==> [4/4] Cleanup + smoke tests"
 $DOCKER image prune -f >/dev/null 2>&1 || true
 
+echo "==> Waiting for backend to be ready..."
+for i in $(seq 1 15); do
+  if curl -fsS http://localhost:5173/health >/dev/null 2>&1; then
+    echo "health OK (attempt $i)"
+    break
+  fi
+  sleep 5
+done
+
 curl -fsS http://localhost:5173/health || { echo "health check failed"; exit 1; }
 echo
 curl -fsS http://localhost:5173/api/v1/products | head -c 300

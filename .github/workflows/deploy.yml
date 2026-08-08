@@ -92,7 +92,7 @@ jobs:
           } | ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=25 \
             -i "$RUNNER_TEMP/deploy_key" \
             "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}" \
-            "set +e; cd \$HOME/ecommerce && git pull --ff-only >> /tmp/pipeline_deploy.log 2>&1; bash -s >> /tmp/pipeline_deploy.log 2>&1; echo \"REMOTE_EXIT=\$?\" >> /tmp/pipeline_deploy.log; cat /tmp/pipeline_deploy.log"
+            "set -e; cd \$HOME/ecommerce && git pull --ff-only && bash -s"
 
       - name: Post-deploy smoke test (from runner)
         run: |
