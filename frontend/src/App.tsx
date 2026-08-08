@@ -8,6 +8,7 @@ import Shop from '@/pages/public/Shop';
 import ProductDetail from '@/pages/public/ProductDetail';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
+import Logout from '@/pages/auth/Logout';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import ResetPassword from '@/pages/auth/ResetPassword';
 import VerifyEmail from '@/pages/auth/VerifyEmail';
@@ -32,6 +33,7 @@ function App() {
         <Route path="/product/:slug" element={<ProductDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/logout" element={<Logout />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/verify-email/:token" element={<VerifyEmail />} />

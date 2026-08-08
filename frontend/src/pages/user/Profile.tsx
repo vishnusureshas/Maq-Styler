@@ -26,8 +26,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navbar } from '@/components/home/Navbar';
 import { HomeFooter } from '@/components/home/HomeFooter';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectUser, logoutUser } from '@/store/slices/authSlice';
+import { useAppSelector } from '@/store/hooks';
+import { selectUser } from '@/store/slices/authSlice';
 import { userApi } from '@/api/user';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -108,7 +108,6 @@ const fieldRow = 'space-y-2';
 const fieldWrap = 'h-11 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-blue-500/40';
 
 export default function Profile() {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector(selectUser);
   const [saving, setSaving] = useState(false);
@@ -161,9 +160,8 @@ export default function Profile() {
     }
   };
 
-  const onSignOut = async () => {
-    await dispatch(logoutUser());
-    navigate('/login', { replace: true });
+  const onSignOut = () => {
+    navigate('/logout');
   };
 
   const initial = (user?.name ?? 'U').charAt(0).toUpperCase();

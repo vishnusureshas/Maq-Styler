@@ -21,8 +21,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectUser, logoutUser } from '@/store/slices/authSlice';
+import { useAppSelector } from '@/store/hooks';
+import { selectUser } from '@/store/slices/authSlice';
 import { LoadingOverlay } from '@/components/ui/loading';
 import { cn } from '@/lib/utils';
 
@@ -52,7 +52,6 @@ function initials(name?: string) {
 
 export function AdminLayout() {
   const user = useAppSelector(selectUser);
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -70,8 +69,7 @@ export function AdminLayout() {
   }, [location.pathname]);
 
   const logout = () => {
-    dispatch(logoutUser());
-    navigate('/login');
+    navigate('/logout');
   };
 
   const tabLabel = adminLinks.find((l) =>

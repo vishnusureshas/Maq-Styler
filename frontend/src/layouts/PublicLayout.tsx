@@ -8,6 +8,7 @@ export function PublicLayout() {
     pathname === '/' ||
     pathname === '/login' ||
     pathname === '/register' ||
+    pathname === '/logout' ||
     pathname === '/forgot-password' ||
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/verify-email');
