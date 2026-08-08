@@ -67,27 +67,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          timeout: 60s
-          command_timeout: 600
-          envs: GITHUB_TOKEN,IMAGE_OWNER,IMAGE_TAG
-          script: |
-            set -euo pipefail
-            if [ ! -d "$HOME/ecommerce/.git" ]; then
-              echo "ERROR: ~/ecommerce is not a git checkout."
-              echo "Run deploy/ec2-setup.sh on the server once before using the pipeline."
-              exit 1
-            fi
-            cd "$HOME/ecommerce"
-            echo "==> Syncing repo before deploy script"
-            git pull --ff-only
-            bash deploy/ec2-deploy.sh
+      - name: Prepare and validate SSH key
+        run: |
+          umask 077
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > "$RUNNER_TEMP/deploy_key"
+          chmod 600 "$RUNNER_TEMP/deploy_key"
+          ssh-keygen -y -f "$RUNNER_TEMP/deploy_key" > /dev/null
+          echo "SSH key is valid"
+
+      - name: Test SSH connectivity
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=25 \
+            -i "$RUNNER_TEMP/deploy_key" \
+            "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}" \
+            "hostname && git -C ~/ecommerce rev-parse --abbrev-ref HEAD || echo 'REPO_MISSING'"
+
+      - name: Deploy to EC2
+        run: |
+          {
+            printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN"
+            printf 'export IMAGE_OWNER=%q\n' "$IMAGE_OWNER"
+            printf 'export IMAGE_TAG=%q\n' "$IMAGE_TAG"
+            cat deploy/ec2-deploy.sh
+          } | ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=25 \
+            -i "$RUNNER_TEMP/deploy_key" \
+            "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}" \
+            "set -e; cd \$HOME/ecommerce && git pull --ff-only && bash -s"
 
       - name: Post-deploy smoke test (from runner)
         run: |
