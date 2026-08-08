@@ -1,4 +1,4 @@
-import { Link, Outlet, NavLink } from 'react-router-dom';
+import { Link, Outlet, NavLink, useLocation } from 'react-router-dom';
 import { User, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppSelector } from '@/store/hooks';
@@ -12,10 +12,14 @@ const navLinks = [
 
 export function PublicLayout() {
   const user = useAppSelector(selectUser);
+  const { pathname } = useLocation();
+  const isHome = pathname === '/';
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+      {!isHome && (
+        <>
+          <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="text-xl font-bold tracking-tight">
             ShopCart
@@ -58,16 +62,20 @@ export function PublicLayout() {
             )}
           </div>
         </div>
-      </header>
+        </header>
+      </>
+      )}
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t">
-        <div className="container flex h-14 items-center justify-between text-sm text-muted-foreground">
-          <span>&copy; {new Date().getFullYear()} ShopCart</span>
-          <span>Built with React + Redux Toolkit</span>
-        </div>
-      </footer>
+      {!isHome && (
+        <footer className="border-t">
+          <div className="container flex h-14 items-center justify-between text-sm text-muted-foreground">
+            <span>&copy; {new Date().getFullYear()} ShopCart</span>
+            <span>Built with React + Redux Toolkit</span>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }
