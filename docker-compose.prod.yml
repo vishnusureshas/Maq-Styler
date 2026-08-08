@@ -3,7 +3,7 @@
 # Requires env: IMAGE_OWNER (defaults below) and IMAGE_TAG (default latest).
 # Run as:  docker compose -f docker-compose.prod.yml up -d
 
-name: ecommerce-prod
+name: ecommerce
 
 services:
   backend:
@@ -73,7 +73,6 @@ services:
 
 networks:
   ecommerce-net:
-    name: ecommerce-net
     driver: bridge
 
 volumes:
