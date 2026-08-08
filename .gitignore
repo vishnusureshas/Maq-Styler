@@ -14,3 +14,9 @@ tsconfig.node.tsbuildinfo
 # OS
 Thumbs.db
 .DS_Store
+
+# secrets / private keys
+*.pem
+*.p12
+*.key
+backend/.env

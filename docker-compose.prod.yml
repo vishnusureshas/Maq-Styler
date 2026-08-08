@@ -1,0 +1,16 @@
+# Production override — deploys prebuilt GHCR images instead of building on the server.
+# Apply together with the base compose file:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Requires env vars (set by deploy/ec2-deploy.sh / the GitHub Actions deploy job):
+#   IMAGE_OWNER  ghcr.io namespace, e.g. vishnureshas  (defaults below)
+#   IMAGE_TAG    image tag to run, default "latest"
+
+services:
+  backend:
+    image: ghcr.io/${IMAGE_OWNER:-vishnureshas}/maq-styler-backend:${IMAGE_TAG:-latest}
+    pull_policy: always
+
+  frontend:
+    image: ghcr.io/${IMAGE_OWNER:-vishnureshas}/maq-styler-frontend:${IMAGE_TAG:-latest}
+    pull_policy: always
