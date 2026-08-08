@@ -13,11 +13,17 @@ const navLinks = [
 export function PublicLayout() {
   const user = useAppSelector(selectUser);
   const { pathname } = useLocation();
-  const isHome = pathname === '/';
+  const isChromeHidden =
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/forgot-password' ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/verify-email');
 
   return (
     <div className="flex min-h-screen flex-col">
-      {!isHome && (
+      {!isChromeHidden && (
         <>
           <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="container flex h-16 items-center justify-between">
@@ -68,7 +74,7 @@ export function PublicLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-      {!isHome && (
+      {!isChromeHidden && (
         <footer className="border-t">
           <div className="container flex h-14 items-center justify-between text-sm text-muted-foreground">
             <span>&copy; {new Date().getFullYear()} ShopCart</span>
