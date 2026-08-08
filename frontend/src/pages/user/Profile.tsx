@@ -163,9 +163,16 @@ export default function Profile() {
     : '';
 
   return (
-    <div className="container py-8">
-      <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-        <div className="h-24 bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-700" />
+    <div className="relative overflow-hidden py-8">
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="animate-blob-float absolute -top-10 -left-24 h-64 w-64 rounded-full bg-sky-300/40 blur-3xl" />
+        <div className="animate-blob-float absolute top-1/3 right-0 h-80 w-80 rounded-full bg-indigo-300/40 blur-3xl [animation-delay:2s]" />
+        <div className="animate-blob-float absolute bottom-0 left-1/2 h-72 w-72 rounded-full bg-violet-300/30 blur-3xl [animation-delay:4s]" />
+      </div>
+
+      <div className="container relative z-10">
+        <div className="animate-fade-up overflow-hidden rounded-3xl border border-white/60 bg-white/70 shadow-2xl shadow-indigo-500/10 backdrop-blur-xl">
+          <div className="animate-gradient-pan h-28 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-600" />
         <div className="flex flex-col gap-4 px-6 pb-6 sm:flex-row sm:items-end sm:justify-between sm:px-8">
           <div className="-mt-10 flex items-end gap-4">
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-3xl font-bold text-primary-foreground shadow-lg ring-4 ring-background">
@@ -191,7 +198,7 @@ export default function Profile() {
         orientation="vertical"
         className="mt-6 grid gap-6 lg:grid-cols-[240px_1fr]"
       >
-        <TabsList className="flex w-full flex-col items-stretch gap-1 rounded-xl border bg-card p-2 shadow-sm lg:sticky lg:top-24 lg:self-start">
+        <TabsList className="flex w-full flex-col items-stretch gap-1 rounded-xl border border-white/60 bg-white/60 p-2 shadow-lg backdrop-blur-xl lg:sticky lg:top-24 lg:self-start">
           <TabsTrigger value="profile" className="justify-start gap-2.5 px-3 py-2.5">
             <User className="h-4 w-4" />
             Profile
@@ -204,7 +211,7 @@ export default function Profile() {
 
         <div className="min-w-0">
           <TabsContent value="profile" className="mt-0">
-            <Card>
+            <Card className="border-white/60 bg-white/70 shadow-xl backdrop-blur-xl">
               <CardHeader>
                 <CardTitle>Personal details</CardTitle>
                 <CardDescription>
@@ -305,7 +312,7 @@ export default function Profile() {
                   </div>
 
                   <div className="flex items-center justify-end gap-3 border-t pt-4">
-                    <Button type="submit" disabled={saving}>
+                    <Button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-600/25 transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-600/40" disabled={saving}>
                       {saving ? 'Saving…' : 'Save changes'}
                     </Button>
                   </div>
@@ -315,7 +322,7 @@ export default function Profile() {
           </TabsContent>
 
           <TabsContent value="security" className="mt-0">
-            <Card>
+            <Card className="border-white/60 bg-white/70 shadow-xl backdrop-blur-xl">
               <CardHeader>
                 <div className="space-y-1.5">
                   <CardTitle className="flex items-center gap-2">
@@ -398,7 +405,7 @@ export default function Profile() {
                   </div>
 
                   <div className="flex items-center justify-end gap-3 border-t pt-4">
-                    <Button type="submit">Update password</Button>
+                    <Button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-600/25 transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-600/40">Update password</Button>
                   </div>
                 </form>
               </CardContent>
@@ -406,6 +413,7 @@ export default function Profile() {
           </TabsContent>
         </div>
       </Tabs>
+      </div>
     </div>
   );
 }

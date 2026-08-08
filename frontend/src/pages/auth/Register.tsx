@@ -58,7 +58,7 @@ export default function Register() {
     <AuthShell>
       <div className="mb-8">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
             <ShoppingBag className="h-5 w-5" />
           </span>
           <span className="text-xl font-bold tracking-tight">ShopCart</span>
@@ -148,7 +148,12 @@ export default function Register() {
           </div>
         )}
 
-        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-600/25 transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-600/40"
+          disabled={loading}
+        >
           {loading ? 'Creating account…' : 'Create account'}
         </Button>
       </form>
