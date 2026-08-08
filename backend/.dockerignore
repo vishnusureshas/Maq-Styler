@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+.env
+server.log
+server.err.log
+.git
+.gitignore
+*.md
+test_conn.mjs
+reconnect_test.mjs

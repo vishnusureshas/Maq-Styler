@@ -1,0 +1,16 @@
+# Root-level ignores for the monorepo
+*.log
+server.log
+server.err.log
+vite.log
+vite.err.log
+tsconfig.tsbuildinfo
+tsconfig.node.tsbuildinfo
+
+# local env backups
+**/_backups/
+**/_sync_temp.mjs
+
+# OS
+Thumbs.db
+.DS_Store

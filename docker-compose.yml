@@ -1,0 +1,79 @@
+name: ecommerce
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: ecommerce-backend
+    ports:
+      - "5001:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - REDIS_ENABLED=true
+      - MONGO_URI=mongodb://mongo:27017/ecommerce
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ecommerce-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  # --- OPTIONAL: local MongoDB instead of MongoDB Atlas ---
+  # Enabled by default so `docker compose up` is fully self-contained.
+  # To use MongoDB Atlas instead, comment out `mongo` + the MONGO_URI
+  # override above and uncomment/enable MONGO_URI in backend/.env.
+  mongo:
+    image: mongo:7
+    container_name: ecommerce-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+networks:
+  ecommerce-net:
+    driver: bridge
+
+volumes:
+  redis-data:
+  mongo-data:
