@@ -15,6 +15,7 @@ import { ArrivalsCarousel } from '@/components/home/ArrivalsCarousel';
 import { AICurated } from '@/components/home/AICurated';
 import { Newsletter } from '@/components/home/Newsletter';
 import { HomeFooter } from '@/components/home/HomeFooter';
+import { ScrollToTop } from '@/components/home/ScrollToTop';
 
 export default function Home() {
   const dispatch = useAppDispatch();
@@ -55,6 +56,7 @@ export default function Home() {
       <AICurated products={arrivals} />
       <Newsletter />
       <HomeFooter />
+      <ScrollToTop />
     </div>
   );
 }
