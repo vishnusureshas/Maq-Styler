@@ -16,13 +16,25 @@ export const getCategories = asyncHandler(async (req, res) => {
   res.json({ success: true, categories });
 });
 
+const slugify = (name) =>
+  String(name)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
 export const createCategory = asyncHandler(async (req, res, next) => {
-  const { name, parent, image } = req.body;
+  const { name, slug, parent, image, isActive } = req.body;
 
-  const exists = await Category.findOne({ name });
-  if (exists) return next(new ApiError(409, 'Category already exists'));
+  const cleanedName = String(name ?? '').trim();
+  if (!cleanedName) return next(new ApiError(400, 'Category name is required'));
 
-  const category = await Category.create({ name, parent, image });
+  const slugValue = slugify(slug || cleanedName);
+
+  const dup = await Category.findOne({ $or: [{ name: cleanedName }, { slug: slugValue }] });
+  if (dup) return next(new ApiError(409, 'Category already exists'));
+
+  const category = await Category.create({ name: cleanedName, slug: slugValue, parent, image, isActive });
   await redisDel(CATEGORIES_CACHE_KEY);
   res.status(201).json({ success: true, category });
 });
@@ -31,7 +43,22 @@ export const updateCategory = asyncHandler(async (req, res, next) => {
   const category = await Category.findById(req.params.id);
   if (!category) return next(new ApiError(404, 'Category not found'));
 
-  Object.assign(category, req.body);
+  const { name, slug, ...rest } = req.body;
+  if (name !== undefined && String(name).trim() !== category.name) {
+    category.name = String(name).trim();
+    category.slug = slugify(slug || category.name);
+  }
+  if (slug !== undefined && slug !== category.slug) {
+    category.slug = slugify(slug || category.name);
+  }
+
+  const dup = await Category.findOne({
+    _id: { $ne: category._id },
+    $or: [{ name: category.name }, { slug: category.slug }],
+  });
+  if (dup) return next(new ApiError(409, 'Category already exists'));
+
+  Object.assign(category, rest);
   await category.save();
 
   await redisDel(CATEGORIES_CACHE_KEY);

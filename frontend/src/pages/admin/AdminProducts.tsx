@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Plus, Pencil, Trash2, FolderPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { productApi } from '@/api/product';
+import { categoryApi } from '@/api/category';
 import { fetchCategories, selectCategories } from '@/store/slices/categorySlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { Product } from '@/types/product';
@@ -51,6 +52,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,9 +103,14 @@ export default function AdminProducts() {
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Products</h1>
           <p className="mt-1 text-sm text-muted-foreground">{products.length} products in catalog.</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="mr-2 h-4 w-4" /> New product
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => setCategoryDialogOpen(true)}>
+            <FolderPlus className="mr-2 h-4 w-4" /> New category
+          </Button>
+          <Button onClick={openCreate}>
+            <Plus className="mr-2 h-4 w-4" /> New product
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border/80 bg-white shadow-sm">
@@ -197,7 +204,89 @@ export default function AdminProducts() {
           }}
         />
       )}
+
+      {categoryDialogOpen && (
+        <CategoryCreateDialog
+          onClose={() => setCategoryDialogOpen(false)}
+          onCreated={() => {
+            setCategoryDialogOpen(false);
+            dispatch(fetchCategories());
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function CategoryCreateDialog({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [name, setName] = useState('');
+  const [parent, setParent] = useState('');
+  const categories = useAppSelector(selectCategories);
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await categoryApi.create({ name: name.trim(), parent: parent || undefined });
+      toast.success('Category created');
+      onCreated();
+    } catch {
+      // toast handled by interceptor
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New category</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label>Category name</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Outdoor Gear"
+              autoFocus
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Parent category (optional)</Label>
+            <Select value={parent} onValueChange={setParent}>
+              <SelectTrigger>
+                <SelectValue placeholder="None (top-level category)" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c._id} value={c._id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving || !name.trim()}>
+              {saving ? 'Creating…' : 'Create category'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
