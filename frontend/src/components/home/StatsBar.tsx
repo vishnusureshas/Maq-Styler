@@ -9,11 +9,11 @@ const stats = [
 
 export function StatsBar() {
   return (
-    <section className="bg-gradient-to-r from-sky-50 via-violet-50 to-cyan-50">
+    <section className="bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50">
       <div className="container grid grid-cols-2 gap-8 py-14 lg:grid-cols-4">
         {stats.map((s, i) => (
           <Reveal key={s.label} delay={i * 100} className="text-center">
-<p className="text-gradient text-4xl font-extrabold tracking-tight sm:text-5xl">
+            <p className="text-gradient text-4xl font-extrabold tracking-tight sm:text-5xl">
               {s.decimals ? (
                 <span>
                   {s.value}

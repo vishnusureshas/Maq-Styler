@@ -156,7 +156,7 @@ export default function Shop() {
       </section>
 
       <div className="container py-8">
-        <div className="mb-10 rounded-3xl border border-white/70 bg-white/70 p-4 shadow-sm backdrop-blur lg:sticky lg:top-[4.5rem] lg:z-30">
+        <div className="mb-10 rounded-3xl border border-white/70 bg-white/70 p-4 shadow-sm backdrop-blur lg:sticky lg:top-[6.5rem] lg:z-30">
           <div className="mb-4 flex items-center justify-between gap-3">
             <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
               <SlidersHorizontal className="h-4 w-4 text-blue-600" />

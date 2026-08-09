@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { Bot, Heart } from 'lucide-react';
-import { toast } from 'sonner';
+import { Bot } from 'lucide-react';
 import { Rating } from '@/components/shared/Rating';
 import { AddToCartButton } from '@/components/product/AddToCartButton';
+import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { formatCurrency } from '@/lib/formatters';
 import { Reveal } from './Reveal';
 import type { Product } from '@/types/product';
@@ -13,8 +13,8 @@ function CuratedCard({ product }: { product: Product }) {
   const image = product.images?.[0];
   const href = `/product/${product.slug ?? product._id}`;
   return (
-    <div className="group flex items-center gap-4 rounded-2xl border border-white/60 bg-white/85 p-3 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-teal-200/50">
-      <Link to={href} className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-50">
+    <div className="group flex items-center gap-4 rounded-2xl border border-white/60 bg-white/90 p-3 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-violet-200/50">
+      <Link to={href} className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-violet-50">
         {image ? (
           <img
             src={image}
@@ -31,21 +31,17 @@ function CuratedCard({ product }: { product: Product }) {
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <Link
           to={href}
-          className="line-clamp-1 text-sm font-semibold text-slate-800 hover:text-teal-600"
+          className="line-clamp-1 text-sm font-semibold text-slate-800 hover:text-violet-600"
         >
           {product.name}
         </Link>
         <Rating value={product.ratingsAverage} className="scale-90 origin-left" />
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-bold text-slate-900">{formatCurrency(product.price)}</span>
+          <span className="text-sm font-bold text-slate-900">
+            {formatCurrency(product.price)}
+          </span>
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => toast.info('Wishlist is coming soon ✨')}
-              aria-label="Add to wishlist"
-              className="grid h-8 w-8 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:text-rose-500"
-            >
-              <Heart className="h-4 w-4" />
-            </button>
+            <WishlistButton product={product} />
             <AddToCartButton productId={product._id} stock={product.stock} iconOnly />
           </div>
         </div>
@@ -55,14 +51,13 @@ function CuratedCard({ product }: { product: Product }) {
 }
 
 export function AICurated({ products }: { products: Product[] }) {
-  const curated =
-    [...products].sort((a, b) => b.ratingsAverage - a.ratingsAverage).slice(0, 4) ?? [];
+  const curated = [...products].sort((a, b) => b.ratingsAverage - a.ratingsAverage).slice(0, 4);
   const tags = useTags(products);
 
   return (
     <section className="container py-16">
-      <Reveal className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-teal-500 via-emerald-500 to-cyan-500 p-px shadow-2xl shadow-teal-300/30">
-        <div className="relative grid gap-8 bg-gradient-to-br from-teal-600/95 via-emerald-600/95 to-cyan-600/95 px-6 py-12 sm:px-10 lg:grid-cols-[1fr_1.2fr] lg:gap-12">
+      <Reveal className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 p-px shadow-2xl shadow-violet-300/40">
+        <div className="relative grid gap-8 bg-gradient-to-br from-violet-700 via-purple-700 to-fuchsia-700 px-6 py-12 sm:px-10 lg:grid-cols-[1fr_1.2fr] lg:gap-12">
           <div className="pointer-events-none absolute inset-0 bg-grid opacity-15" />
 
           <div className="relative">
@@ -72,7 +67,7 @@ export function AICurated({ products }: { products: Product[] }) {
             <h2 className="mt-5 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
               Curated for you, by our AI stylist
             </h2>
-            <p className="mt-3 max-w-sm text-emerald-50/90">
+            <p className="mt-3 max-w-sm text-violet-50/90">
               We blend your taste with hot trends to surface a tight roster of products worth your
               time — every single day.
             </p>
@@ -89,18 +84,18 @@ export function AICurated({ products }: { products: Product[] }) {
             </div>
             <div className="mt-8 flex items-center gap-3">
               <div className="flex -space-x-2">
-                {['from-blue-400 to-indigo-500', 'from-pink-400 to-rose-500', 'from-amber-400 to-orange-500'].map(
+                {['from-violet-400 to-purple-500', 'from-fuchsia-400 to-pink-500', 'from-indigo-400 to-violet-500'].map(
                   (g, i) => (
                     <span
                       key={i}
-                      className={`grid h-9 w-9 place-items-center rounded-full border-2 border-teal-600 bg-gradient-to-br ${g} text-xs font-bold text-white`}
+                      className={`grid h-9 w-9 place-items-center rounded-full border-2 border-violet-700 bg-gradient-to-br ${g} text-xs font-bold text-white`}
                     >
                       {['A', 'K', 'M'][i]}
                     </span>
                   )
                 )}
               </div>
-              <p className="text-sm text-emerald-50/90">
+              <p className="text-sm text-violet-50/90">
                 <span className="font-bold text-white">2,400+</span> shoppers trust the picks
               </p>
             </div>
@@ -108,7 +103,7 @@ export function AICurated({ products }: { products: Product[] }) {
 
           <div className="relative grid content-start gap-3 sm:grid-cols-2">
             {curated.length === 0 ? (
-              <p className="text-sm text-emerald-50/90">Loading our daily picks…</p>
+              <p className="text-sm text-violet-50/90">Loading our daily picks…</p>
             ) : (
               curated.map((p) => <CuratedCard key={p._id} product={p} />)
             )}

@@ -1,11 +1,142 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, Sparkles, Star, ShieldCheck, Truck, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, Star, Zap, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Rating } from '@/components/shared/Rating';
 import { formatCurrency } from '@/lib/formatters';
 import type { Category, Product } from '@/types/product';
+
+const avatars = [
+  { initial: 'A', className: 'from-violet-500 to-purple-500' },
+  { initial: 'K', className: 'from-fuchsia-400 to-pink-500' },
+  { initial: 'M', className: 'from-indigo-500 to-violet-500' },
+  { initial: 'R', className: 'from-purple-400 to-fuchsia-500' },
+];
+
+function HeroVisual({ products }: { products: Product[] }) {
+  const slides = products.filter((p) => p.images?.length);
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const id = window.setInterval(
+      () => setIndex((i) => (i + 1) % slides.length),
+      5000
+    );
+    return () => window.clearInterval(id);
+  }, [slides.length]);
+
+  const validIndex = slides.length > 0 ? index % slides.length : 0;
+  const current = slides[validIndex] ?? null;
+  const slideKey = current?._id ?? 'placeholder';
+
+  const headphone = slides.find((p) => !current || p._id !== current._id);
+
+  return (
+    <div className="relative">
+      <div className="pointer-events-none absolute -inset-8 -z-10 rounded-[3rem] bg-gradient-to-br from-violet-300/40 via-purple-200/30 to-pink-200/50 blur-2xl" />
+
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-white/70 bg-gradient-to-br from-violet-100 via-white to-pink-100 shadow-2xl shadow-violet-300/40">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-gradient-to-br from-purple-300/40 to-pink-300/40 blur-2xl" />
+          <div className="absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-gradient-to-tr from-violet-300/40 to-fuchsia-200/40 blur-2xl" />
+        </div>
+
+        <div className="relative aspect-[4/5] max-h-[560px] w-full">
+          {slideKey && (
+            <img
+              key={slideKey}
+              src={current?.images?.[0]}
+              alt={current?.name}
+              className="animate-hero-slide absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+          {!slideKey && (
+            <div className="absolute inset-0 grid place-items-center">
+              <div className="grid place-items-center gap-3 text-slate-400">
+                <Zap className="h-16 w-16 text-violet-300" />
+                <span className="text-lg font-semibold">Featured products</span>
+              </div>
+            </div>
+          )}
+
+          <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 shadow-lg shadow-violet-900/10 backdrop-blur">
+            <Tag className="h-4 w-4 text-rose-500" />
+            <p>
+              <span className="text-xs font-bold text-rose-500">Big Sale</span>
+              <span className="text-xs font-semibold text-slate-700"> — Up to 50% Off</span>
+            </p>
+          </div>
+
+          <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-3 rounded-2xl border border-white/60 bg-white/85 p-3.5 shadow-xl shadow-violet-900/10 backdrop-blur">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-slate-800">
+                {current?.name ?? 'Premium products'}
+              </p>
+              {current && <Rating value={current.ratingsAverage} count={current.ratingsQuantity} />}
+              <p className="mt-0.5 text-base font-extrabold text-violet-600">
+                {current ? formatCurrency(current.price) : '—'}
+              </p>
+            </div>
+            <Button asChild size="sm" className="h-9 shrink-0 rounded-full px-5">
+              <Link to={current ? `/product/${current.slug ?? current._id}` : '/shop'}>
+                Shop <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="absolute bottom-24 right-5 z-10 flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 rounded-full border-white/70 bg-white/90 shadow-sm backdrop-blur"
+            onClick={() => setIndex((i) => (slides.length ? (i - 1 + slides.length) % slides.length : 0))}
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 rounded-full border-white/70 bg-white/90 shadow-sm backdrop-blur"
+            onClick={() => setIndex((i) => (i + 1) % (slides.length || 1))}
+            aria-label="Next slide"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {headphone && (
+        <div className="animate-float absolute -right-4 -top-6 hidden w-44 overflow-hidden rounded-2xl border border-white/70 bg-white/90 p-2.5 shadow-xl shadow-violet-900/10 backdrop-blur sm:block">
+          <div className="flex items-center gap-2.5">
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-violet-50">
+              <img src={headphone.images?.[0]} alt={headphone.name} className="h-full w-full object-cover" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-bold text-slate-800">{headphone.name}</p>
+              <p className="text-xs font-extrabold text-violet-600">{formatCurrency(headphone.price)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {slides.length > 1 && (
+        <div
+          className="animate-float absolute -bottom-6 -left-4 hidden items-center gap-2 rounded-2xl border border-white/70 bg-white/90 px-3 py-2 shadow-xl shadow-violet-900/10 backdrop-blur sm:flex"
+          style={{ animationDelay: '-2s' }}
+        >
+          <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
+          <div>
+            <p className="text-xs font-bold text-slate-800">4.9/5 rated</p>
+            <p className="text-[11px] text-slate-500">12k+ verified reviews</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Hero({
   products,
@@ -14,172 +145,76 @@ export function Hero({
   products: Product[];
   categories: Category[];
 }) {
-  const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-
-  const hero =
-    [...products].sort((a, b) => (b.images?.length ?? 0) - (a.images?.length ?? 0))[0] ?? null;
-  const heroImage = hero?.images?.[0];
-
-  const submit = () => {
-    const q = query.trim();
-    navigate(q ? `/shop?keyword=${encodeURIComponent(q)}` : '/shop');
-  };
-
+  void categories;
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-sky-100/80 via-white to-white">
-      <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_75%)]" />
-
+    <section className="relative overflow-hidden bg-white">
       <div className="pointer-events-none absolute inset-0">
-        <div className="animate-blob-float absolute -left-24 top-10 h-80 w-80 rounded-full bg-blue-400/30 blur-3xl" />
-        <div
-          className="animate-blob-float absolute right-0 top-24 h-96 w-96 rounded-full bg-violet-300/30 blur-3xl"
-          style={{ animationDelay: '-6s' }}
-        />
-        <div
-          className="animate-blob-float absolute -bottom-20 left-1/3 h-80 w-80 rounded-full bg-cyan-300/30 blur-3xl"
-          style={{ animationDelay: '-12s' }}
-        />
-        <div
-          className="animate-blob-float absolute left-1/2 top-1/2 h-64 w-64 rounded-full bg-amber-200/40 blur-3xl"
-          style={{ animationDelay: '-9s' }}
-        />
+        <div className="absolute -left-24 top-16 h-80 w-80 rounded-full bg-violet-100/70 blur-3xl" />
+        <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-fuchsia-100/70 blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-100/60 blur-3xl" />
       </div>
 
       <div className="container relative grid items-center gap-14 py-16 lg:grid-cols-2 lg:py-24">
         <div className="animate-fade-up">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/70 px-4 py-1.5 text-sm font-medium text-blue-700 shadow-sm backdrop-blur">
-            <Sparkles className="h-4 w-4" />
-            AI-curated essentials, picked fresh for you
-          </div>
+          <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-violet-600">
+            <Sparkles className="h-4 w-4" /> New arrivals
+          </span>
 
-          <h1 className="mt-6 text-5xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-6xl xl:text-7xl">
-            Tomorrow&apos;s
+          <h1 className="mt-6 text-5xl font-extrabold leading-[1.04] tracking-tight text-slate-900 sm:text-6xl xl:text-7xl">
+            Shop smart.
             <br />
-            <span className="text-gradient">essentials,</span>
-            <br />
-            delivered today.
+            <span className="text-gradient-pink">Live better.</span>
           </h1>
 
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-500">
-            Premium tech, everyday essentials and standout designs — all in one beautiful store,
-            backed by fast shipping and fuss-free returns.
+            Discover top-quality products at the best prices. Trendy, reliable &amp; just for
+            you.
           </p>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit();
-            }}
-            className="glass mt-8 flex max-w-lg items-center gap-2 rounded-full p-1.5"
-          >
-            <Search className="ml-3 h-5 w-5 shrink-0 text-blue-600" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for headphones, watches, decor…"
-              className="h-10 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
-            />
-            <Button type="submit" size="sm" className="h-10 rounded-full px-6 text-white">
-              Search
-            </Button>
-          </form>
-
-          <div className="mt-6 flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-slate-500">Popular:</span>
-            {categories.slice(0, 5).map((c) => (
-              <Link
-                key={c._id}
-                to={`/shop?category=${c._id}`}
-                className="rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-sm text-slate-600 backdrop-blur transition-colors hover:border-blue-300 hover:text-blue-600"
-              >
-                {c.name}
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Button asChild size="lg" className="rounded-full bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500 px-9 shadow-xl shadow-violet-500/30 transition-transform duration-300 hover:scale-[1.03]">
+              <Link to="/shop">
+                Shop Now <ArrowRight className="h-5 w-5" />
               </Link>
-            ))}
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button asChild size="lg" className="rounded-full px-8 shadow-lg shadow-blue-600/25">
-              <Link to="/shop">Explore the store</Link>
             </Button>
             <Button
               asChild
               size="lg"
               variant="outline"
-              className="rounded-full border-slate-300 bg-white/70 backdrop-blur"
+              className="rounded-full border-slate-200 bg-white px-9 text-slate-700 shadow-sm transition-all duration-300 hover:border-violet-300 hover:text-violet-600"
             >
-              <Link to="/register">Join free</Link>
+              <Link to="/shop">Explore Deals</Link>
             </Button>
           </div>
+
+          <div className="mt-10 flex flex-wrap items-center gap-4">
+            <div className="flex -space-x-2.5">
+              {avatars.map((a) => (
+                <span
+                  key={a.initial}
+                  className={`grid h-10 w-10 place-items-center rounded-full border-2 border-white bg-gradient-to-br ${a.className} text-xs font-bold text-white shadow-sm`}
+                >
+                  {a.initial}
+                </span>
+              ))}
+            </div>
+            <div>
+              <p className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
+                50,000+ happy shoppers
+              </p>
+              <p className="flex items-center gap-1 text-xs text-slate-500">
+                <span className="flex">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  ))}
+                </span>
+                4.9/5 from 12,000+ reviews
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="relative mx-auto hidden w-full max-w-md lg:block">
-          <div className="absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-br from-blue-400/30 via-violet-300/30 to-cyan-300/40 blur-2xl" />
-          <div className="relative aspect-square overflow-hidden rounded-[2.5rem] border border-white/80 bg-white/40 shadow-2xl shadow-slate-300/50 backdrop-blur-xl">
-            {heroImage ? (
-              <img
-                src={heroImage}
-                alt={hero?.name ?? 'Featured product'}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-slate-400">
-                <Zap className="h-16 w-16 text-blue-400/60" />
-                <span className="text-lg font-semibold">Featured product</span>
-              </div>
-            )}
-
-            <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-violet-700 shadow-sm backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" /> AI Curated Pick
-            </div>
-
-            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3 rounded-2xl border border-white/70 bg-white/80 p-3 backdrop-blur">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-800">
-                  {hero?.name ?? 'Today’s spotlight'}
-                </p>
-                {hero && <Rating value={hero.ratingsAverage} count={hero.ratingsQuantity} />}
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="text-base font-bold text-slate-900">
-                  {hero ? formatCurrency(hero.price) : '—'}
-                </p>
-                {hero && (
-                  <Link to={`/product/${hero.slug ?? hero._id}`} className="text-xs font-medium text-blue-600 hover:underline">
-                    View details
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="animate-float absolute -left-8 top-10 flex items-center gap-2 rounded-2xl border border-white/70 bg-white/85 px-3 py-2 shadow-xl backdrop-blur">
-            <Truck className="h-5 w-5 text-emerald-500" />
-            <div>
-              <p className="text-xs font-semibold text-slate-800">Free shipping</p>
-              <p className="text-[11px] text-slate-500">On orders over $50</p>
-            </div>
-          </div>
-
-          <div
-            className="animate-float absolute -right-6 bottom-24 flex items-center gap-2 rounded-2xl border border-white/70 bg-white/85 px-3 py-2 shadow-xl backdrop-blur"
-            style={{ animationDelay: '-3s' }}
-          >
-            <ShieldCheck className="h-5 w-5 text-blue-600" />
-            <div>
-              <p className="text-xs font-semibold text-slate-800">30-day returns</p>
-              <p className="text-[11px] text-slate-500">No questions asked</p>
-            </div>
-          </div>
-
-          <div
-            className="animate-float absolute -bottom-6 left-12 flex items-center gap-2 rounded-2xl border border-white/70 bg-white/85 px-3 py-2 shadow-xl backdrop-blur"
-            style={{ animationDelay: '-1.5s' }}
-          >
-            <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-            <p className="text-xs font-semibold text-slate-800">4.9/5 shopper rating</p>
-          </div>
-        </div>
+        <HeroVisual products={products} />
       </div>
     </section>
   );

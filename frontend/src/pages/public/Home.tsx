@@ -6,7 +6,7 @@ import { productApi } from '@/api/product';
 import type { Product } from '@/types/product';
 import { Navbar } from '@/components/home/Navbar';
 import { Hero } from '@/components/home/Hero';
-import { TrustBar } from '@/components/home/TrustBar';
+import { Benefits } from '@/components/home/Benefits';
 import { StatsBar } from '@/components/home/StatsBar';
 import { CategoryGrid } from '@/components/home/CategoryGrid';
 import { FeaturedProducts } from '@/components/home/FeaturedProducts';
@@ -46,11 +46,11 @@ export default function Home() {
     <div className="bg-white">
       <Navbar />
       <Hero products={featured.length > 0 ? featured : arrivals} categories={categories} />
-      <TrustBar />
+      <Benefits />
       <StatsBar />
       <CategoryGrid categories={categories} products={arrivals} />
       <FeaturedProducts products={featured} loading={status === 'loading'} />
-      <PromoBanner />
+      <PromoBanner products={arrivals} />
       <ArrivalsCarousel products={arrivals} />
       <AICurated products={arrivals} />
       <Newsletter />

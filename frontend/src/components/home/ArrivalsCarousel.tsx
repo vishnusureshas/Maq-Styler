@@ -1,11 +1,11 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Heart, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Rating } from '@/components/shared/Rating';
 import { AddToCartButton } from '@/components/product/AddToCartButton';
+import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { formatCurrency } from '@/lib/formatters';
 import { Reveal } from './Reveal';
 import type { Product } from '@/types/product';
@@ -22,26 +22,38 @@ export function ArrivalsCarousel({ products }: { products: Product[] }) {
   const inStock = products.filter((p) => p.stock > 0);
 
   return (
-    <section className="bg-gradient-to-b from-transparent via-sky-50/60 to-transparent py-16">
+    <section className="bg-gradient-to-b from-transparent via-violet-50/50 to-transparent py-16">
       <div className="container">
-        <div className="mb-8 flex items-end justify-between gap-4">
+        <Reveal className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
+            <p className="text-sm font-bold uppercase tracking-wider text-violet-600">
               Fresh drops
             </p>
-            <h2 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">
-              New arrivals
+            <h2 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+              New Arrivals
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="rounded-full" onClick={() => scroll(-1)} aria-label="Previous">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full border-slate-200 bg-white shadow-sm"
+              onClick={() => scroll(-1)}
+              aria-label="Previous"
+            >
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <Button variant="outline" size="icon" className="rounded-full" onClick={() => scroll(1)} aria-label="Next">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full border-slate-200 bg-white shadow-sm"
+              onClick={() => scroll(1)}
+              aria-label="Next"
+            >
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
-        </div>
+        </Reveal>
 
         {inStock.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 py-16 text-center text-slate-400">
@@ -63,8 +75,8 @@ export function ArrivalsCarousel({ products }: { products: Product[] }) {
                   delay={Math.min(i, 4) * 60}
                   className="w-64 shrink-0 snap-start"
                 >
-                  <div className="group overflow-hidden rounded-3xl border border-white/70 bg-white/80 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-200/50">
-                    <div className="relative aspect-square overflow-hidden bg-slate-50">
+                  <div className="group overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-200/40">
+                    <div className="relative aspect-square overflow-hidden bg-violet-50/60">
                       <Link to={href}>
                         {image ? (
                           <img
@@ -80,28 +92,29 @@ export function ArrivalsCarousel({ products }: { products: Product[] }) {
                         )}
                       </Link>
                       {compareAt && (
-                        <Badge variant="destructive" className="absolute left-3 top-3 rounded-full px-2.5">
+                        <Badge className="absolute left-3 top-3 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-2.5 text-white shadow-sm">
                           Sale
                         </Badge>
                       )}
-                      <button
-                        onClick={() => toast.info('Wishlist is coming soon ✨')}
-                        aria-label="Add to wishlist"
-                        className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full border border-white/70 bg-white/80 text-slate-500 shadow-sm backdrop-blur transition-colors hover:text-rose-500"
-                      >
-                        <Heart className="h-4 w-4" />
-                      </button>
-                      <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-violet-600/90 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                      <div className="absolute right-3 top-3">
+                        <WishlistButton product={p} />
+                      </div>
+                      <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur">
                         <Sparkles className="h-3 w-3" /> New
                       </span>
                     </div>
                     <div className="flex flex-col gap-1.5 p-4">
-                      <Link to={href} className="line-clamp-1 font-semibold text-slate-800 hover:text-blue-600">
+                      <Link
+                        to={href}
+                        className="line-clamp-1 font-semibold text-slate-800 hover:text-violet-600"
+                      >
                         {p.name}
                       </Link>
                       <Rating value={p.ratingsAverage} count={p.ratingsQuantity} />
                       <div className="flex items-baseline gap-2">
-                        <span className="font-bold text-slate-900">{formatCurrency(p.price)}</span>
+                        <span className="font-extrabold text-slate-900">
+                          {formatCurrency(p.price)}
+                        </span>
                         {compareAt && (
                           <span className="text-sm text-slate-400 line-through">
                             {formatCurrency(compareAt)}

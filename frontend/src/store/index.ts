@@ -5,6 +5,7 @@ import productReducer from './slices/productSlice';
 import categoryReducer from './slices/categorySlice';
 import orderReducer from './slices/orderSlice';
 import adminReducer from './slices/adminSlice';
+import wishlistReducer from './slices/wishlistSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     category: categoryReducer,
     order: orderReducer,
     admin: adminReducer,
+    wishlist: wishlistReducer,
   },
 });
 
