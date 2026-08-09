@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, Star, Zap, Tag } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Headphones, Star, Tag, Watch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Rating } from '@/components/shared/Rating';
-import { formatCurrency } from '@/lib/formatters';
 import type { Category, Product } from '@/types/product';
 
 const avatars = [
@@ -13,127 +11,143 @@ const avatars = [
   { initial: 'R', className: 'from-purple-400 to-fuchsia-500' },
 ];
 
+function Plant({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 90 120" className={className} aria-hidden="true">
+      <ellipse cx="45" cy="116" rx="30" ry="6" fill="rgba(124,58,237,0.10)" />
+      <path d="M27 112h36l-5-24H32z" fill="#fbcfe8" />
+      <rect x="31" y="86" width="28" height="6" rx="3" fill="#f9a8d4" opacity="0.85" />
+      <path d="M45 88 L44 40" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <ellipse cx="45" cy="34" rx="6" ry="12" fill="#4ade80" transform="rotate(8 45 34)" />
+      <ellipse cx="32" cy="48" rx="5" ry="10" fill="#22c55e" transform="rotate(38 32 48)" />
+      <ellipse cx="58" cy="48" rx="5" ry="10" fill="#4ade80" transform="rotate(-38 58 48)" />
+      <ellipse cx="38" cy="62" rx="4" ry="9" fill="#16a34a" transform="rotate(18 38 62)" />
+      <ellipse cx="52" cy="62" rx="4" ry="9" fill="#22c55e" transform="rotate(-18 52 62)" />
+    </svg>
+  );
+}
+
 function HeroVisual({ products }: { products: Product[] }) {
-  const slides = products.filter((p) => p.images?.length);
+  const watchProducts = products.filter(
+    (p) => /watch|band|fitness|smart ?wearable/i.test(p.name) && p.images?.length
+  );
+  const slides = (watchProducts.length > 0 ? watchProducts : products.filter((p) => p.images?.length)).slice(0, 4);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     if (slides.length < 2) return;
-    const id = window.setInterval(
-      () => setIndex((i) => (i + 1) % slides.length),
-      5000
-    );
+    const id = window.setInterval(() => setIndex((i) => (i + 1) % slides.length), 5000);
     return () => window.clearInterval(id);
   }, [slides.length]);
 
-  const validIndex = slides.length > 0 ? index % slides.length : 0;
-  const current = slides[validIndex] ?? null;
-  const slideKey = current?._id ?? 'placeholder';
+  const current = slides.length > 0 ? slides[index % slides.length] : null;
+  const watchImage = current?.images?.[0];
+  const watchKey = current?._id ?? 'placeholder';
 
-  const headphone = slides.find((p) => !current || p._id !== current._id);
+  const headphones =
+    products.find((p) => /headphone|earbud|earphone|airpod|headset|audio/i.test(p.name) && p.images?.length) ?? null;
+  const headImage = headphones?.images?.[0];
+
+  const go = (dir: 1 | -1) => {
+    if (slides.length === 0) return;
+    setIndex((i) => (i + dir + slides.length) % slides.length);
+  };
 
   return (
-    <div className="relative">
-      <div className="pointer-events-none absolute -inset-8 -z-10 rounded-[3rem] bg-gradient-to-br from-violet-300/40 via-purple-200/30 to-pink-200/50 blur-2xl" />
-
-      <div className="relative overflow-hidden rounded-[2.5rem] border border-white/70 bg-gradient-to-br from-violet-100 via-white to-pink-100 shadow-2xl shadow-violet-300/40">
+    <div className="relative mx-auto w-full max-w-[560px]">
+      <div className="relative isolate aspect-[4/5] w-full overflow-visible">
+        {/* Soft abstract background — white, lavender, purple, pink, subtle blue glow */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-gradient-to-br from-purple-300/40 to-pink-300/40 blur-2xl" />
-          <div className="absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-gradient-to-tr from-violet-300/40 to-fuchsia-200/40 blur-2xl" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#fdfbff] via-[#f6f0fe] to-white" />
+          <div className="absolute -left-10 top-[6%] h-56 w-56 rounded-full bg-violet-200/70 blur-3xl sm:h-72 sm:w-72" />
+          <div className="absolute -right-8 top-[30%] h-48 w-48 rounded-full bg-fuchsia-200/60 blur-3xl sm:h-64 sm:w-64" />
+          <div className="absolute left-[24%] top-[58%] h-52 w-52 rounded-full bg-pink-200/60 blur-3xl sm:h-64 sm:w-64" />
+          <div className="absolute -bottom-6 left-[10%] h-44 w-44 rounded-full bg-indigo-200/60 blur-3xl sm:h-56 sm:w-56" />
+          <div className="absolute right-[14%] top-2 h-36 w-36 rounded-full bg-sky-200/40 blur-3xl" />
         </div>
 
-        <div className="relative aspect-[4/5] max-h-[560px] w-full">
-          {slideKey && (
-            <img
-              key={slideKey}
-              src={current?.images?.[0]}
-              alt={current?.name}
-              className="animate-hero-slide absolute inset-0 h-full w-full object-cover"
-            />
-          )}
-          {!slideKey && (
-            <div className="absolute inset-0 grid place-items-center">
-              <div className="grid place-items-center gap-3 text-slate-400">
-                <Zap className="h-16 w-16 text-violet-300" />
-                <span className="text-lg font-semibold">Featured products</span>
+        {/* Soft platform / pedestal beneath the products */}
+        <div className="pointer-events-none absolute bottom-[7%] left-1/2 z-0 h-16 w-[70%] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.18),transparent_62%)]" />
+
+        {/* Plant — behind, on the left */}
+        <div className="absolute bottom-[8%] left-[2%] z-[5] -rotate-3">
+          <Plant className="w-24 drop-shadow-[0_10px_14px_rgba(76,29,149,0.18)] sm:w-32" />
+        </div>
+
+        {/* Wireless headphones — behind/right */}
+        <div className="absolute right-[1%] top-[12%] z-10 w-44 rotate-6 sm:w-60 lg:w-64">
+          <div className="relative h-full w-full">
+            <div className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-full bg-white/70 blur-2xl" />
+            {headImage ? (
+              <img
+                src={headImage}
+                alt={headphones?.name ?? 'Wireless headphones'}
+                className="animate-float h-full w-full object-contain mix-blend-multiply"
+              />
+            ) : (
+              <div className="grid h-full min-h-[10rem] w-full place-items-center">
+                <span className="grid h-24 w-24 place-items-center rounded-full border border-violet-200/70 bg-white/80 text-violet-400 shadow-xl shadow-violet-200/50">
+                  <Headphones className="h-10 w-10" />
+                </span>
               </div>
-            </div>
-          )}
-
-          <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 shadow-lg shadow-violet-900/10 backdrop-blur">
-            <Tag className="h-4 w-4 text-rose-500" />
-            <p>
-              <span className="text-xs font-bold text-rose-500">Big Sale</span>
-              <span className="text-xs font-semibold text-slate-700"> — Up to 50% Off</span>
-            </p>
-          </div>
-
-          <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-3 rounded-2xl border border-white/60 bg-white/85 p-3.5 shadow-xl shadow-violet-900/10 backdrop-blur">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-slate-800">
-                {current?.name ?? 'Premium products'}
-              </p>
-              {current && <Rating value={current.ratingsAverage} count={current.ratingsQuantity} />}
-              <p className="mt-0.5 text-base font-extrabold text-violet-600">
-                {current ? formatCurrency(current.price) : '—'}
-              </p>
-            </div>
-            <Button asChild size="sm" className="h-9 shrink-0 rounded-full px-5">
-              <Link to={current ? `/product/${current.slug ?? current._id}` : '/shop'}>
-                Shop <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            )}
           </div>
         </div>
 
-        <div className="absolute bottom-24 right-5 z-10 flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 rounded-full border-white/70 bg-white/90 shadow-sm backdrop-blur"
-            onClick={() => setIndex((i) => (slides.length ? (i - 1 + slides.length) % slides.length : 0))}
-            aria-label="Previous slide"
+        {/* Smartwatch — primary foreground object */}
+        <div className="absolute left-1/2 top-1/2 z-20 w-[72%] -translate-x-1/2 -translate-y-1/2 sm:w-[66%]">
+          {watchImage ? (
+            <div className="relative">
+              <img
+                key={watchKey}
+                src={watchImage}
+                alt={current?.name ?? 'Smartwatch'}
+                className="animate-hero-slide mx-auto h-auto max-h-[26rem] w-full object-contain mix-blend-multiply"
+              />
+            </div>
+          ) : (
+            <div className="grid aspect-square w-full place-items-center">
+              <span className="grid h-36 w-36 place-items-center rounded-full border border-violet-200/70 bg-white/80 text-violet-400 shadow-xl shadow-violet-500/30 sm:h-44 sm:w-44">
+                <Watch className="h-16 w-16 sm:h-20 sm:w-20" />
+              </span>
+            </div>
+          )}
+          <div className="pointer-events-none absolute inset-x-6 bottom-2 -z-10 h-6 rounded-full bg-purple-300/30 blur-xl" />
+        </div>
+
+        {/* Sale badge — floating, upper right (upper left on mobile) */}
+        <div className="animate-float absolute right-auto left-3 top-3 z-30 sm:left-auto sm:right-5 sm:top-6">
+          <div className="flex items-center gap-2.5 rounded-2xl rounded-br-md bg-white/95 px-4 py-3 shadow-xl shadow-purple-900/15 ring-1 ring-black/[0.03]">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-md shadow-purple-500/30">
+              <Tag className="h-5 w-5" />
+            </span>
+            <div className="leading-tight">
+              <p className="text-sm font-extrabold text-slate-900">Big Sale</p>
+              <p className="text-xs font-semibold text-violet-600">Up to 50% Off</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Carousel controls — bottom right */}
+        <div className="absolute bottom-3 right-3 z-30 flex gap-2 sm:bottom-5 sm:right-5">
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            aria-label="Previous product"
+            className="grid h-10 w-10 place-items-center rounded-full border border-slate-100 bg-white text-slate-600 shadow-lg shadow-purple-900/10 transition-all duration-200 hover:scale-110 hover:text-violet-600 hover:shadow-violet-300/40 active:scale-95"
           >
             <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 rounded-full border-white/70 bg-white/90 shadow-sm backdrop-blur"
-            onClick={() => setIndex((i) => (i + 1) % (slides.length || 1))}
-            aria-label="Next slide"
+          </button>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            aria-label="Next product"
+            className="grid h-10 w-10 place-items-center rounded-full border border-slate-100 bg-white text-slate-600 shadow-lg shadow-purple-900/10 transition-all duration-200 hover:scale-110 hover:text-violet-600 hover:shadow-violet-300/40 active:scale-95"
           >
             <ChevronRight className="h-5 w-5" />
-          </Button>
+          </button>
         </div>
       </div>
-
-      {headphone && (
-        <div className="animate-float absolute -right-4 -top-6 hidden w-44 overflow-hidden rounded-2xl border border-white/70 bg-white/90 p-2.5 shadow-xl shadow-violet-900/10 backdrop-blur sm:block">
-          <div className="flex items-center gap-2.5">
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-violet-50">
-              <img src={headphone.images?.[0]} alt={headphone.name} className="h-full w-full object-cover" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-xs font-bold text-slate-800">{headphone.name}</p>
-              <p className="text-xs font-extrabold text-violet-600">{formatCurrency(headphone.price)}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {slides.length > 1 && (
-        <div
-          className="animate-float absolute -bottom-6 -left-4 hidden items-center gap-2 rounded-2xl border border-white/70 bg-white/90 px-3 py-2 shadow-xl shadow-violet-900/10 backdrop-blur sm:flex"
-          style={{ animationDelay: '-2s' }}
-        >
-          <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-          <div>
-            <p className="text-xs font-bold text-slate-800">4.9/5 rated</p>
-            <p className="text-[11px] text-slate-500">12k+ verified reviews</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -150,29 +164,36 @@ export function Hero({
     <section className="relative overflow-hidden bg-white">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-16 h-80 w-80 rounded-full bg-violet-100/70 blur-3xl" />
-        <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-fuchsia-100/70 blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-100/60 blur-3xl" />
+        <div className="absolute right-[8%] top-0 h-96 w-96 rounded-full bg-fuchsia-100/70 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-indigo-100/60 blur-3xl" />
       </div>
 
-      <div className="container relative grid items-center gap-14 py-16 lg:grid-cols-2 lg:py-24">
-        <div className="animate-fade-up">
-          <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-violet-600">
-            <Sparkles className="h-4 w-4" /> New arrivals
+      <div className="container relative grid items-center gap-12 py-16 lg:grid-cols-12 lg:gap-8 lg:py-20">
+        {/* LEFT — 45% marketing content */}
+        <div className="animate-fade-up lg:col-span-5">
+          <span className="inline-flex items-center text-sm font-extrabold uppercase tracking-[0.22em] text-violet-600">
+            <span className="mr-2 h-px w-8 bg-violet-400" />
+            New arrivals
           </span>
 
-          <h1 className="mt-6 text-5xl font-extrabold leading-[1.04] tracking-tight text-slate-900 sm:text-6xl xl:text-7xl">
-            Shop smart.
+          <h1 className="mt-6 text-5xl font-extrabold leading-[1.04] tracking-tight text-slate-950 sm:text-6xl xl:text-[4.5rem]">
+            Shop Smart.
             <br />
-            <span className="text-gradient-pink">Live better.</span>
+            <span className="text-gradient-pink">Live Better.</span>
           </h1>
 
-          <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-500">
-            Discover top-quality products at the best prices. Trendy, reliable &amp; just for
-            you.
+          <p className="mt-6 max-w-md text-lg leading-relaxed text-slate-500">
+            Discover top-quality products at the best prices.
+            <br />
+            Trendy, reliable &amp; just for you.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Button asChild size="lg" className="rounded-full bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500 px-9 shadow-xl shadow-violet-500/30 transition-transform duration-300 hover:scale-[1.03]">
+            <Button
+              asChild
+              size="lg"
+              className="rounded-full bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500 px-9 shadow-xl shadow-violet-500/30 transition-transform duration-300 hover:scale-[1.03]"
+            >
               <Link to="/shop">
                 Shop Now <ArrowRight className="h-5 w-5" />
               </Link>
@@ -181,7 +202,7 @@ export function Hero({
               asChild
               size="lg"
               variant="outline"
-              className="rounded-full border-slate-200 bg-white px-9 text-slate-700 shadow-sm transition-all duration-300 hover:border-violet-300 hover:text-violet-600"
+              className="rounded-full border-slate-200 bg-white px-9 text-slate-700 shadow-sm transition-all duration-300 hover:border-violet-300 hover:text-violet-600 hover:shadow-md hover:shadow-violet-200/50"
             >
               <Link to="/shop">Explore Deals</Link>
             </Button>
@@ -192,29 +213,30 @@ export function Hero({
               {avatars.map((a) => (
                 <span
                   key={a.initial}
-                  className={`grid h-10 w-10 place-items-center rounded-full border-2 border-white bg-gradient-to-br ${a.className} text-xs font-bold text-white shadow-sm`}
+                  className={`grid h-10 w-10 place-items-center rounded-full border-2 border-white bg-gradient-to-br ${a.className} text-xs font-bold text-white shadow-md`}
                 >
                   {a.initial}
                 </span>
               ))}
             </div>
             <div>
-              <p className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
-                50,000+ happy shoppers
-              </p>
-              <p className="flex items-center gap-1 text-xs text-slate-500">
+              <p className="text-sm font-bold text-slate-900">50,000+ happy shoppers</p>
+              <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                 <span className="flex">
                   {[1, 2, 3, 4, 5].map((i) => (
                     <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                   ))}
                 </span>
-                4.9/5 from 12,000+ reviews
+                <span className="font-semibold text-slate-700">4.8</span> (12K Reviews)
               </p>
             </div>
           </div>
         </div>
 
-        <HeroVisual products={products} />
+        {/* RIGHT — 55% floating product showcase */}
+        <div className="lg:col-span-7">
+          <HeroVisual products={products} />
+        </div>
       </div>
     </section>
   );
