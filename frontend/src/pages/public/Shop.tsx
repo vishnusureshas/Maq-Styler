@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, PackageSearch } from 'lucide-react';
+import { Search, SlidersHorizontal, PackageSearch, Star, Truck, ShieldCheck, Sparkles, ShoppingBag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,94 @@ function ShopSkeleton() {
           <Skeleton className="h-10 w-full" />
         </div>
       ))}
+    </div>
+  );
+}
+
+function ShopHeaderVisual() {
+  const products = useAppSelector((s) => s.product.list);
+  const images = products.filter((p) => p.images?.length);
+  const main = images[0] ?? null;
+  const second = images[1] ?? null;
+  const third = images[2] ?? null;
+
+  return (
+    <div className="relative mx-auto h-[540px] w-full max-w-md">
+      {/* Ambient gradient glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="animate-blob-float absolute -right-10 top-2 h-56 w-56 rounded-full bg-fuchsia-300/40 blur-3xl" />
+        <div className="animate-blob-float absolute -left-6 bottom-2 h-56 w-56 rounded-full bg-indigo-300/40 blur-3xl" style={{ animationDelay: '-6s' }} />
+        <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-200/50 blur-3xl" />
+      </div>
+
+      {/* Decorative concentric rings */}
+      <div className="absolute left-1/2 top-1/2 h-[24rem] w-[24rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-200/60" />
+      <div className="absolute left-1/2 top-1/2 h-[19rem] w-[19rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-200/40" />
+
+      {/* Main product card */}
+      <div className="animate-float absolute left-1/2 top-10 z-20 w-72 -translate-x-1/2 rounded-[2rem] border border-white/70 bg-white p-3 shadow-2xl shadow-purple-900/20">
+        {main ? (
+          <img src={main.images[0]} alt={main.name} className="h-72 w-full rounded-[1.4rem] object-cover" />
+        ) : (
+          <div className="grid h-72 w-full place-items-center rounded-[1.4rem] bg-gradient-to-br from-violet-100 to-fuchsia-100 text-violet-300">
+            <ShoppingBag className="h-14 w-14" />
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-2 px-1 pt-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-slate-900">{main?.name ?? 'Featured picks'}</p>
+            <p className="flex items-center gap-1 text-xs text-slate-400">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              4.8 rated
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-violet-100 px-2.5 py-1 text-xs font-bold text-violet-600">
+            Bestseller
+          </span>
+        </div>
+      </div>
+
+      {/* Secondary product card */}
+      {second && (
+        <div
+          className="animate-float absolute right-1 top-28 z-10 w-52 rotate-6 rounded-3xl border border-white/70 bg-white p-3 shadow-xl shadow-purple-900/15"
+          style={{ animationDelay: '-2.5s' }}
+        >
+          <img src={second.images[0]} alt={second.name} className="mx-auto h-40 w-full rounded-2xl object-cover" />
+          <p className="line-clamp-1 px-1 pt-2 text-xs font-bold text-slate-800">{second.name}</p>
+        </div>
+      )}
+
+      {/* Third product mini-card */}
+      {third && (
+        <div
+          className="animate-float absolute -left-1 bottom-28 z-10 w-48 -rotate-3 rounded-3xl border border-white/70 bg-white p-2.5 shadow-xl shadow-purple-900/15"
+          style={{ animationDelay: '-4s' }}
+        >
+          <img src={third.images[0]} alt={third.name} className="mx-auto h-28 w-full rounded-2xl object-cover" />
+        </div>
+      )}
+
+      {/* Trust chips */}
+      <div className="animate-float absolute left-0 top-6 flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2 shadow-lg shadow-purple-900/10 backdrop-blur">
+        <Truck className="h-4 w-4 text-violet-600" />
+        <p className="text-xs font-bold text-slate-700">Free shipping</p>
+      </div>
+      <div
+        className="animate-float absolute bottom-44 right-0 flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2 shadow-lg shadow-purple-900/10 backdrop-blur"
+        style={{ animationDelay: '-3s' }}
+      >
+        <ShieldCheck className="h-4 w-4 text-fuchsia-600" />
+        <p className="text-xs font-bold text-slate-700">Secure &amp; easy</p>
+      </div>
+
+      {/* Sale badge */}
+      <div className="animate-pulse-soft absolute right-4 top-6 grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500 text-center text-white shadow-xl shadow-violet-500/30">
+        <div>
+          <p className="text-lg font-extrabold leading-none">50%</p>
+          <p className="text-[9px] font-semibold uppercase tracking-wide">Off</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -108,50 +196,56 @@ export default function Shop() {
 
   return (
     <div className="bg-white">
-      <section className="relative overflow-hidden border-b border-white/60 bg-gradient-to-br from-sky-100/90 via-white to-indigo-50/70">
+      <section className="relative overflow-hidden border-b border-white/60 bg-gradient-to-br from-violet-100/90 via-white to-fuchsia-50/70">
         <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_80%)]" />
         <div className="pointer-events-none absolute inset-0">
-          <div className="animate-blob-float absolute -left-20 top-0 h-72 w-72 rounded-full bg-blue-300/40 blur-3xl" />
+          <div className="animate-blob-float absolute -left-20 top-0 h-72 w-72 rounded-full bg-violet-300/40 blur-3xl" />
           <div
-            className="animate-blob-float absolute right-10 top-10 h-72 w-72 rounded-full bg-violet-300/40 blur-3xl"
+            className="animate-blob-float absolute right-10 top-10 h-72 w-72 rounded-full bg-fuchsia-300/40 blur-3xl"
             style={{ animationDelay: '-7s' }}
           />
         </div>
 
-        <div className="container relative py-14 lg:py-16">
-          <span className="text-sm font-semibold uppercase tracking-wider text-blue-600">
-            Browse the collection
-          </span>
-          <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-            The Shop
-          </h1>
-          <p className="mt-3 max-w-lg text-slate-500">
-            Explore every product in the store. Refine by category or price to find exactly what
-            you&apos;re after.
-          </p>
+        <div className="container relative grid items-center gap-12 py-14 lg:grid-cols-12 lg:py-16">
+          <div className="animate-fade-up lg:col-span-7">
+            <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-violet-600">
+              <Sparkles className="h-4 w-4" /> Browse the collection
+            </span>
+            <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">
+              The Shop
+            </h1>
+            <p className="mt-3 max-w-lg text-slate-500">
+              Explore every product in the store. Refine by category or price to find exactly what
+              you&apos;re after.
+            </p>
 
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            className="glass mt-8 flex max-w-xl items-center gap-2 rounded-full p-1.5"
-          >
-            <Search className="ml-3 h-5 w-5 shrink-0 text-blue-600" />
-            <Input
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Search products…"
-              className="h-10 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
-            />
-            {keyword && (
-              <button
-                type="button"
-                onClick={() => setKeyword('')}
-                className="mr-2 text-slate-400 transition-colors hover:text-slate-600"
-                aria-label="Clear search"
-              >
-                ×
-              </button>
-            )}
-          </form>
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="glass mt-8 flex max-w-xl items-center gap-2 rounded-full p-1.5"
+            >
+              <Search className="ml-3 h-5 w-5 shrink-0 text-violet-600" />
+              <Input
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="Search products…"
+                className="h-10 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
+              />
+              {keyword && (
+                <button
+                  type="button"
+                  onClick={() => setKeyword('')}
+                  className="mr-2 text-slate-400 transition-colors hover:text-slate-600"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </form>
+          </div>
+
+          <div className="hidden lg:col-span-5 lg:block">
+            <ShopHeaderVisual />
+          </div>
         </div>
       </section>
 
@@ -159,11 +253,11 @@ export default function Shop() {
         <div className="mb-10 rounded-3xl border border-white/70 bg-white/70 p-4 shadow-sm backdrop-blur lg:sticky lg:top-[6.5rem] lg:z-30">
           <div className="mb-4 flex items-center justify-between gap-3">
             <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <SlidersHorizontal className="h-4 w-4 text-blue-600" />
+              <SlidersHorizontal className="h-4 w-4 text-violet-600" />
               Filters
             </span>
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-blue-600 hover:text-blue-700">
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-violet-600 hover:text-violet-700">
                 Clear all
               </Button>
             )}
