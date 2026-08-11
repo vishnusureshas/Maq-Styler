@@ -43,9 +43,9 @@ echo "==> Status"
 sudo docker compose ps
 
 echo "==> Smoke tests"
-curl -sS http://localhost/api/v1/products | head -c 300; echo
-curl -sS http://localhost/health
+curl -sS http://localhost:5173/api/v1/products | head -c 300; echo
+curl -sS http://localhost:5173/health
 
 echo
-echo "DONE. Frontend: http://<EC2-PUBLIC-IP>"
+echo "DONE. Frontend: http://<EC2-PUBLIC-IP>:5173"
 echo "Restart your ssh session so the docker group takes effect."
