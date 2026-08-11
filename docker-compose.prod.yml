@@ -33,6 +33,7 @@ services:
     pull_policy: always
     container_name: ecommerce-frontend
     ports:
+      - "80:80"
       - "5173:80"
     depends_on:
       - backend

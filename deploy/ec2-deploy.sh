@@ -46,16 +46,16 @@ $DOCKER image prune -f >/dev/null 2>&1 || true
 
 echo "==> Waiting for backend to be ready..."
 for i in $(seq 1 15); do
-  if curl -fsS http://localhost:5173/health >/dev/null 2>&1; then
+  if curl -fsS http://localhost/health >/dev/null 2>&1; then
     echo "health OK (attempt $i)"
     break
   fi
   sleep 5
 done
 
-curl -fsS http://localhost:5173/health || { echo "health check failed"; exit 1; }
+curl -fsS http://localhost/health || { echo "health check failed"; exit 1; }
 echo
-curl -fsS http://localhost:5173/api/v1/products | head -c 300
+curl -fsS http://localhost/api/v1/products | head -c 300
 echo
 
-echo "Deploy complete: http://$(hostname -I | awk '{print $1}'):5173"
+echo "Deploy complete: http://$(hostname -I | awk '{print $1}')"
