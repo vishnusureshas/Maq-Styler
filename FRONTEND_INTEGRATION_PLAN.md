@@ -21,6 +21,9 @@
 11. [User Pages (Cart, Checkout, Orders)](#11-user-pages--cart--checkout--orders-)
 12. [Admin Panel Pages](#12-admin-panel-pages)
 13. [Routing & Protected Routes](#13-routing--protected-routes)
+    - [12.1 Role-Based Route Access Matrix](#121-role-based-route-access-matrix)
+    - [12.2 User Workflow (end-to-end with roles)](#122-user-workflow-end-to-end-with-roles)
+    - [12.3 Admin Workflow (end-to-end with roles)](#123-admin-workflow-end-to-end-with-roles)
 14. [UI Components (ShadCN) per Feature](#14-ui-components--shadcn--per-feature)
 15. [State Management Strategy](#15-state-management-strategy)
 16. [Error Handling & Loading States](#16-error-handling--loading-states)
@@ -632,6 +635,61 @@ export function ProtectedRoute({ roles }: { roles?: ('user' | 'admin')[] }) {
   </Route>
 </Route>
 ```
+
+> **Live implementation note:** `frontend/src/App.tsx` matches this layout exactly, with three layout buckets —
+> `PublicLayout` (guest), `<ProtectedRoute />` (any logged-in user incl. admin), and
+> `<ProtectedRoute roles={['admin']} />` (admin only). The `roles` prop is the **client-side** guard;
+> the backend re-enforces it server-side with `protect` + `adminOnly` (see the backend plan §7.5).
+
+### 12.1 Role-Based Route Access Matrix
+
+Maps **routes** → **minimum role** → **route guard → layout**. This mirrors the backend's endpoint matrix
+(backend plan §7.5) one-to-one, so a user who can reach a page is always able to call its APIs.
+
+| Route(s) | Layout | Guard | Guest | User | Admin |
+|---|---|---|---|---|---|
+| `/`, `/shop`, `/product/:slug` | `PublicLayout` | — (public) | ✅ | ✅ | ✅ |
+| `/login`, `/register`, `/forgot-password`, `/reset-password/:token`, `/verify-email/:token` | `PublicLayout` | redirect to `/` if already authed | ✅ | — | — |
+| `/cart`, `/checkout`, `/my-orders`, `/profile` | — | `ProtectedRoute` (token present) | — | ✅ | ✅ |
+| `/admin` (Dashboard, orders, products, users, inventory, sales) | `AdminLayout` | `ProtectedRoute roles={['admin']}` (role === `admin`) | — | — | ✅ |
+| `/logout` | `PublicLayout` | token present (clears session) | — | ✅ | ✅ |
+| `*` (404) | — | — | ✅ | ✅ | ✅ |
+
+**Guard rules (`src/routes/ProtectedRoute.tsx`):**
+- `roles` omitted → only requires `token` (any authenticated user; admins included).
+- `roles={['admin']}` → additionally requires `user.role === 'admin'`; a regular user is bounced to `/`.
+- Redirect target for unauthenticated users is `/login`; authorized-but-wrong-role redirects to `/`.
+- These are UX guards **only** — never trust them alone; the API layer still 401/403s.
+
+### 12.2 User Workflow (end-to-end with roles)
+
+Numbers map to router guards + the API slice fired at each step (see §9 features→pages mapping).
+
+1. **Browse (guest)** — `PublicLayout` routes to Home/Shop/ProductDetail; no token needed. Product cards, category chips, filters + pagination all hit public `GET /products` & `GET /categories`.
+2. **Register / verify (guest)** — `/register` (form → `POST /auth/register`) then `/verify-email/:token` from the emailed link (built from backend `CLIENT_URL`).
+3. **Login (guest → user)** — `/login` fires `login` thunk (`POST /auth/login`), persists token (localStorage + httpOnly cookie), then redirects by returned `role`: user → `/`, admin → `/admin`.
+4. **Cart & coupon (user)** — `/cart` behind `<ProtectedRoute />`. `cartSlice` thunks hit `GET /cart·/add·/update·/remove·/apply-coupon`; totals + discount rendered from `res.data.cart`.
+5. **Checkout (user)** — `/checkout` multi-step (address → payment → review). `POST /orders` (matching backend `createOrderValidator`), then card via `POST /payments/create-payment-intent` + `stripe.confirmPayment`, or COD via `POST /payments/confirm`.
+6. **Orders (user)** — `/my-orders` list; `/order/:id` detail; actions `PATCH /orders/:id/cancel` (pending/processing) and `POST /orders/:id/return` (delivered/shipped). `Order.paymentStatus` badge shown from response.
+7. **Profile (user)** — `/profile` → `GET/PATCH /users/profile`, `PATCH /users/change-password`, `DELETE /users/profile`.
+8. **Reviews (user writes, all read)** — ProductDetail reviews `GET /reviews/product/:id`; form (user only) `POST /reviews/product/:id`.
+
+**Role passing summary:** a user only ever holds `role: 'user'`; the whole shopping journey lives under the non-admin `ProtectedRoute`. Admin-role pages are unreachable for them at both the router and API level.
+
+### 12.3 Admin Workflow (end-to-end with roles)
+
+Every admin page sits under `<ProtectedRoute roles={['admin']} />` + `AdminLayout`, and every API call is
+guarded server-side by `protect, adminOnly` (backend plan §10.5). A non-admin gets a client redirect + a 403
+on any manual API attempt.
+
+1. **Login & land on admin (admin)** — after `/login`, the `role: 'admin'` response routes to `/admin` (Dashboard) → `GET /admin/stats` cards.
+2. **Products (admin)** — `AdminProducts`: `POST /products/upload` (multipart, Cloudinary) then `POST /products`; `PUT|DELETE /products/:id`. Categories via `POST|PUT|DELETE /categories`.
+3. **Orders (admin)** — `AdminOrders`: `GET /admin/orders?status=`; `PATCH /admin/orders/:id/status`; `PATCH /admin/orders/:id/payment` to mark paid **or refund** (backend now sets `paymentStatus: 'paid'|'refunded'` and restores stock).
+4. **Users (admin)** — `AdminUsers`: `GET /admin/users`, `PATCH /admin/users/:id` (role / isActive), `DELETE /admin/users/:id`. Deactivating a user makes `protect` reject their next request.
+5. **Inventory (admin)** — `AdminInventory`: `GET /admin/inventory`, `PATCH /admin/inventory/:id` (adjust + note), low-stock highlight from `GET /admin/products/low-stock`.
+6. **Sales report (admin)** — `SalesReport`: `GET /admin/sales-report?from=&to=` → revenue chart.
+
+**Role passing summary:** an admin inherits every user page (cart, orders, profile) **plus** the `roles={['admin']}` subtree. The client guard and server guard are redundant by design; consistency between them is what the §17 contract checklist verifies.
 
 ---
 

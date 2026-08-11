@@ -12,6 +12,7 @@ const inventorySchema = new mongoose.Schema(
         type: { type: String, enum: ['in', 'out', 'adjust'], required: true },
         quantity: Number,
         note: String,
+        changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         changedAt: { type: Date, default: Date.now },
       },
     ],

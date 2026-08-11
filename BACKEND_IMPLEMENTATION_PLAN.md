@@ -2,6 +2,7 @@
 
 > Tech Stack: **Node.js**, **Express**, **MongoDB (Mongoose)**, **JWT Auth**, **ES Module (ESM)** syntax.
 > Scope: Full backend for a shopping cart application including an **Admin Panel** (products, orders, users, inventory, analytics).
+> Role model: `guest` → `user` → `admin`. Every endpoint is guarded by `protect` (any logged-in user) and/or `adminOnly` (role === `admin`). Sections [7.5](#75-role-based-access-matrix), [8.3](#83-user-workflow--end-to-end-with-roles-) and [10.5](#105-admin-workflow--end-to-end-with-roles-) describe the complete role-based workflows.
 
 ---
 
@@ -771,6 +772,34 @@ import { protect, adminOnly } from '../middleware/authMiddleware.js';
 router.post('/', protect, adminOnly, createProduct);
 ```
 
+### 7.5 Role-Based Access Matrix
+
+All routes act on the **most privileged role that satisfies the guard**. Matches the live `backend/routes/v1/*.js`:
+
+| Resource / Action | Guest | User | Admin |
+|---|---|---|---|
+| Auth: register, login, verify-email, forgot/reset-password, refresh-token | ✅ | — | — |
+| Auth: `/me`, logout | — | ✅ | ✅ |
+| User: profile read/update/delete, change-password | — | ✅ | ✅ |
+| Products: list, by id, by slug | ✅ | ✅ | ✅ |
+| Products: create/update/delete/upload images (Cloudinary) | — | — | ✅ |
+| Categories: list | ✅ | ✅ | ✅ |
+| Categories: create/update/delete | — | — | ✅ |
+| Cart: get/add/update/remove/clear/apply-coupon/remove-coupon | — | ✅ | ✅ |
+| Orders: create, my-orders, get, cancel, return | — | ✅ (owner only) | ✅ (any) |
+| Payments: create-payment-intent, confirm | — | ✅ | ✅ |
+| Payments: webhook | ✅ (Stripe-signed, raw body) | — | — |
+| Reviews: list product reviews | ✅ | ✅ | ✅ |
+| Reviews: create/update/delete | — | ✅ (owner only) | ✅ |
+| Coupons: validate | — | ✅ | ✅ |
+| Coupons: list/create/update/delete | — | — | ✅ |
+| Admin: stats, all orders, order status/payment, users, inventory, low-stock, sales-report | — | — | ✅ |
+
+**Guard rules (from `middleware/authMiddleware.js`):**
+- `protect` → any authenticated, active `user` OR `admin` (403 only when role needed).
+- `adminOnly` → fails with `403 Access denied. Admin only` unless `req.user.role === 'admin'`.
+- Ownership checks inside controllers (e.g. `getOrder`, `cancelOrder`) compare `order.user` with `req.user._id`.
+
 ---
 
 ## 8. Cart & Order Flow
@@ -874,6 +903,21 @@ export const createOrder = async (req, res, next) => {
   }
 };
 ```
+
+### 8.3 User Workflow (end-to-end with roles)
+
+Numbers map to the middleware running at each step.
+
+1. **Browse (guest)** — public `GET /api/v1/products`, `GET /api/v1/products/:id|slug`, `GET /api/v1/categories`, `GET /api/v1/reviews/product/:productId`. No token needed.
+2. **Register (guest → user)** — `POST /auth/register` (rate-limited + validated) sends verification email built from `CLIENT_URL`; `POST /auth/verify-email/:token` activates the account.
+3. **Login (user/guest)** — `POST /auth/login` returns access JWT (also set as httpOnly cookie) + stored refresh token (`/auth/refresh-token` rotates it). Subsequent requests send `Authorization: Bearer <token>` → passes `protect`.
+4. **Add to cart (user)** — `GET/POST/PUT/DELETE /api/v1/cart*` all sit behind `router.use(protect)`. Apply coupon via `POST /cart/apply-coupon` (coupon validated by `getCoupons`-adjacent logic + `POST /coupons/validate/:code`).
+5. **Checkout (user)** — `POST /api/v1/orders` with `shippingAddress` + `paymentMethod` (`card`|`cod`|`paypal`). Server recomputes `itemsPrice`, `shippingPrice`, `discount`, `totalPrice`, decrements product stock, clears the cart.
+6. **Pay (user)** — Card: `POST /payments/create-payment-intent` → client `stripe.confirmPayment()` → Stripe calls public `POST /payments/webhook` (raw body + signature verified) which sets `isPaid: true`, `paidAt`, `status: processing`. COD: `POST /payments/confirm` (order stays `pending`/`processing` until admin marks paid).
+7. **Track & manage orders (user)** — `GET /orders/my-orders`, `GET /orders/:id` (owner-only), `PATCH /orders/:id/cancel` (owner; restores stock on cancel), `POST /orders/:id/return`.
+8. **Review (user)** — `POST /reviews/product/:productId` then `PATCH|DELETE /reviews/:id` (owner-only, one review per user per product via unique index).
+
+**Role passing summary:** a user never exceeds `role: 'user'`; every user endpoint must pass `protect` and any `adminOnly` guard will 403 for them. Ownership is enforced at controller level, not just by role.
 
 ---
 
@@ -1028,6 +1072,20 @@ export const updateUser = async (req, res, next) => {
   res.json({ success: true, user });
 };
 ```
+
+### 10.5 Admin Workflow (end-to-end with roles)
+
+Every route in `adminRoutes.js` starts with `router.use(protect, adminOnly)`, so **both** guards must pass — the admin is first authenticated, then confirmed as `role === 'admin'`. A regular `user` gets `403 Access denied. Admin only`.
+
+1. **Login & enter dashboard (admin)** — standard `/auth/login`; frontend routes to the admin panel only when the returned `role` is `admin`. `GET /admin/stats` returns total users/orders/products, monthly revenue, recent orders.
+2. **Product catalog (admin)** — `POST /products/upload` (Multer → Cloudinary URLs) then `POST /products` (validated); `PUT|DELETE /products/:id`; `PUT /categories/:id`, `DELETE /categories/:id`, `POST /categories`. Admin can flag `isFeatured`, set `compareAtPrice`, manage `stock`, `sku`, `variants`.
+3. **Order management (admin)** — `GET /admin/orders` (all orders + filters) → `PATCH /admin/orders/:id/status` (appends to `statusHistory`; `cancelled`/`refunded` restores stock) → `PATCH /admin/orders/:id/payment` (mark paid / refund).
+4. **Inventory (admin)** — `GET /admin/products/low-stock` (threshold) and `GET /admin/inventory`; `PATCH /admin/inventory/:id` records +/- adjustments with note + `changedBy` and syncs `Product.stock`.
+5. **Customer management (admin)** — `GET /admin/users`; `PATCH /admin/users/:id` to change `role` (user↔admin) or activate/deactivate; `DELETE /admin/users/:id`. Deactivated users fail the `isActive` check inside `protect` on their next request — enforcing role revocation.
+6. **Coupons (admin)** — `GET|POST|PUT|DELETE /coupons` (admin-only); listed rules like `type`, `value`, `minOrderValue`, `usageLimit`, `expiresAt` are enforced at apply time for users.
+7. **Reporting (admin)** — `GET /admin/sales-report` (revenue per period) powers the admin analytics view.
+
+**Role passing summary:** an admin inherits every `user` capability (cart, orders, reviews) **plus** all `adminOnly` endpoints. Guard evaluation order is always `protect` → `adminOnly` → controller ownership logic.
 
 ---
 

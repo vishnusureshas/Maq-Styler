@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Eye, CheckCircle2, XCircle } from 'lucide-react';
+import { Eye, CheckCircle2, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -15,6 +15,7 @@ import {
   fetchAdminOrders,
   updateOrderStatus,
   updateOrderPayment,
+  refundOrder,
   selectAdminOrders,
 } from '@/store/slices/adminSlice';
 import type { Order, OrderStatus } from '@/types/order';
@@ -39,6 +40,16 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Cancelled',
   refunded: 'Refunded',
 };
+
+const paymentLabels: Record<string, string> = {
+  pending: 'Unpaid',
+  paid: 'Paid',
+  failed: 'Failed',
+  refunded: 'Refunded',
+};
+
+const canRefund = (o: Order) =>
+  o.paymentStatus !== 'refunded' && o.isPaid && !['cancelled', 'refunded'].includes(o.status);
 
 export default function AdminOrders() {
   const dispatch = useAppDispatch();
@@ -129,8 +140,17 @@ export default function AdminOrders() {
                         </Select>
                       </td>
                       <td className="p-4">
-                        <Badge variant={order.isPaid ? 'default' : 'outline'}>
-                          {order.isPaid ? 'Paid' : 'Unpaid'}
+                        <Badge
+                          variant={
+                            order.paymentStatus === 'refunded'
+                              ? 'secondary'
+                              : order.isPaid
+                                ? 'default'
+                                : 'outline'
+                          }
+                        >
+                          {paymentLabels[order.paymentStatus] ??
+                            (order.isPaid ? 'Paid' : 'Unpaid')}
                         </Badge>
                       </td>
                       <td className="p-4 text-right font-semibold">{fmt(order.totalPrice)}</td>
@@ -154,8 +174,15 @@ export default function AdminOrders() {
           onClose={() => setSelected(null)}
           onTogglePaid={() =>
             dispatch(
-              updateOrderPayment({ id: selected._id, isPaid: !selected.isPaid })
+              updateOrderPayment({
+                id: selected._id,
+                isPaid: !selected.isPaid,
+                paymentStatus: !selected.isPaid ? 'paid' : 'pending',
+              })
             ).then(() => setSelected(null))
+          }
+          onRefund={() =>
+            dispatch(refundOrder({ id: selected._id })).then(() => setSelected(null))
           }
           onStatus={(s) => dispatch(updateOrderStatus({ id: selected._id, status: s }))}
         />
@@ -168,11 +195,13 @@ function OrderDetail({
   order,
   onClose,
   onTogglePaid,
+  onRefund,
   onStatus,
 }: {
   order: Order;
   onClose: () => void;
   onTogglePaid: () => void;
+  onRefund: () => void;
   onStatus: (s: OrderStatus) => void;
 }) {
   return (
@@ -183,6 +212,17 @@ function OrderDetail({
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant={
+                order.paymentStatus === 'refunded'
+                  ? 'secondary'
+                  : order.isPaid
+                    ? 'default'
+                    : 'outline'
+              }
+            >
+              {paymentLabels[order.paymentStatus] ?? (order.isPaid ? 'Paid' : 'Unpaid')}
+            </Badge>
             <Select value={order.status} onValueChange={(v) => onStatus(v as OrderStatus)}>
               <SelectTrigger className="h-8 w-36">
                 <SelectValue>{statusLabels[order.status]}</SelectValue>
@@ -195,14 +235,18 @@ function OrderDetail({
                 ))}
               </SelectContent>
             </Select>
-            <Button
-              variant={order.isPaid ? 'outline' : 'default'}
-              size="sm"
-              onClick={onTogglePaid}
-            >
-              {order.isPaid ? <XCircle className="mr-2 h-4 w-4" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-              Mark as {order.isPaid ? 'unpaid' : 'paid'}
-            </Button>
+            {canRefund(order) && (
+              <Button variant="secondary" size="sm" onClick={onRefund}>
+                <Undo2 className="mr-2 h-4 w-4" />
+                Refund payment
+              </Button>
+            )}
+            {!order.isPaid && (
+              <Button variant="outline" size="sm" onClick={onTogglePaid}>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Mark as paid
+              </Button>
+            )}
           </div>
 
           <div className="rounded border p-3 text-sm text-muted-foreground">

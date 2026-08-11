@@ -52,8 +52,18 @@ export const updateOrderStatus = createAsyncThunk(
 
 export const updateOrderPayment = createAsyncThunk(
   'admin/updateOrderPayment',
-  async (payload: { id: string; isPaid: boolean; status?: OrderStatus }) => {
+  async (payload: { id: string; isPaid?: boolean; status?: OrderStatus; paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded' }) => {
     const { data } = await adminApi.updateOrderPayment(payload.id, payload);
+    return data.order as Order;
+  }
+);
+
+export const refundOrder = createAsyncThunk(
+  'admin/refundOrder',
+  async (payload: { id: string }) => {
+    const { data } = await adminApi.updateOrderPayment(payload.id, {
+      paymentStatus: 'refunded',
+    });
     return data.order as Order;
   }
 );
@@ -128,6 +138,9 @@ const adminSlice = createSlice({
         state.orders = state.orders.map((o) => (o._id === action.payload._id ? action.payload : o));
       })
       .addCase(updateOrderPayment.fulfilled, (state, action) => {
+        state.orders = state.orders.map((o) => (o._id === action.payload._id ? action.payload : o));
+      })
+      .addCase(refundOrder.fulfilled, (state, action) => {
         state.orders = state.orders.map((o) => (o._id === action.payload._id ? action.payload : o));
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {

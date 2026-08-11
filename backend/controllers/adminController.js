@@ -53,12 +53,22 @@ export const updateOrderStatus = asyncHandler(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
   if (!order) return next(new ApiError(404, 'Order not found'));
 
+  const previousStatus = order.status;
+  const wasRefunded = order.paymentStatus === 'refunded';
+
   order.status = status;
   order.statusHistory.push({ status, changedAt: new Date(), note });
   if (status === 'delivered') {
     order.deliveredAt = Date.now();
   }
-  if (status === 'cancelled' || status === 'refunded') {
+  if (status === 'refunded' && order.isPaid) {
+    order.paymentStatus = 'refunded';
+  }
+  if (
+    (status === 'cancelled' || status === 'refunded') &&
+    !['cancelled', 'refunded'].includes(previousStatus) &&
+    !wasRefunded
+  ) {
     for (const item of order.items) {
       await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
     }
@@ -76,13 +86,38 @@ export const updateOrderStatus = asyncHandler(async (req, res, next) => {
 });
 
 export const updateOrderPayment = asyncHandler(async (req, res, next) => {
-  const { isPaid, status } = req.body;
+  const { isPaid, status, paymentStatus } = req.body;
   const order = await Order.findById(req.params.id);
   if (!order) return next(new ApiError(404, 'Order not found'));
 
-  order.isPaid = isPaid;
-  if (isPaid) order.paidAt = Date.now();
-  if (status) order.status = status;
+  const wasRefunded = order.paymentStatus === 'refunded';
+
+  if (paymentStatus === 'refunded') {
+    order.isPaid = true;
+    order.paymentStatus = 'refunded';
+    if (!wasRefunded && !['cancelled', 'refunded'].includes(order.status)) {
+      for (const item of order.items) {
+        await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
+      }
+    }
+    if (['pending', 'processing'].includes(order.status)) {
+      order.status = 'refunded';
+    }
+    order.statusHistory.push({ status: order.status, changedAt: new Date(), note: 'Payment refunded by admin' });
+  } else if (isPaid === true) {
+    order.isPaid = true;
+    order.paidAt = order.paidAt || Date.now();
+    order.paymentStatus = 'paid';
+    if (order.status === 'pending') order.status = 'processing';
+    order.statusHistory.push({ status: order.status, changedAt: new Date(), note: 'Payment confirmed by admin' });
+  } else if (isPaid === false) {
+    order.isPaid = false;
+    order.paymentStatus = 'pending';
+  }
+
+  if (status && !['cancelled', 'refunded'].includes(order.status)) {
+    order.status = status;
+  }
   await order.save();
 
   res.json({ success: true, order });

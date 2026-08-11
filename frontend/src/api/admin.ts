@@ -17,7 +17,7 @@ export const adminApi = {
     client.get('/admin/orders', { params }),
   updateOrderStatus: (id: string, payload: { status: OrderStatus; note?: string }) =>
     client.patch(`/admin/orders/${id}/status`, payload),
-  updateOrderPayment: (id: string, payload: { isPaid: boolean; status?: OrderStatus }) =>
+  updateOrderPayment: (id: string, payload: { isPaid?: boolean; status?: OrderStatus; paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded' }) =>
     client.patch(`/admin/orders/${id}/payment`, payload),
   users: () => client.get<{ users: User[] }>('/admin/users'),
   updateUser: (id: string, payload: { role?: 'user' | 'admin'; isActive?: boolean }) =>
